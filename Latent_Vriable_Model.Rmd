@@ -7,9 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message=FALSE,fig.align="center",fig.width=7,fig.height=7,out.width = "60%")
-# library(devtools)
+library(devtools)
 # Install RBM
-#install_github("TimoMatzen/RBM")
+install_github("TimoMatzen/RBM")
 pacman::p_load(
         AmesHousing
       , car
@@ -93,18 +93,29 @@ ggpairs(as.data.frame(Pokemon_x_scaled))
 ```
 
 Apply latent variable method described in this work book. Do you find anything that you did not find before?
-
 ```{r}
-#
-#
+
+pca_analysis <- prcomp(Pokemon_x_scaled, center = T, scale. = T)
+summary(pca_analysis)
+
+print(pca_analysis$rotation)
+
+scree_plot <- function(pca) {
+  plot(pca, type = 'lines', main = "Eigenvalue Scree Plot")
+}
+
+scree_plot(pca_analysis)
+biplot(pca_analysis, cex = 0.8, main = "Visualization of PCA")
+
 ```
+
 
 Comment of the result:
 
 ~~~
-Please write your answer in full sentences.
+From Importance of components: PC1 explains about 45.19% of the variance and PC2 explains about 18.22%, which together explain more than 63% of the variance. So this suggests that most of the data variability can be captured by these two principal components.
 
-
+From three pictures, the Speed attribute has a unique relationship with other attributes. And retaining the first two principal components may be sufficient to preserve the most information while reducing the complexity of the data. 
 ~~~
 
 
@@ -112,20 +123,44 @@ I also found evolution information
 
 ```{r}
 Pokemon_evo<-fread("Pokemon_evo.csv")
+head(Pokemon_evo)
 ```
-
-
 ```{r}
-#
-#
+
+Pokemon$Stage <- NA  
+
+for (i in 1:nrow(Pokemon)) {
+  name <- Pokemon$Name[i]
+  if (name %in% Pokemon_evo$Stage_1) {
+    Pokemon$Stage[i] <- 1
+  } else if (name %in% Pokemon_evo$Stage_2) {
+    Pokemon$Stage[i] <- 2
+  } else if (name %in% Pokemon_evo$Stage_3) {
+    Pokemon$Stage[i] <- 3
+  }
+}
+
+pca_result <- prcomp(Pokemon[, 
+                             c('HP', 'Attack', 'Defense', 'Sp..Atk', 'Sp..Def', 'Speed')], 
+                     center = T, scale. = T)
+
+scores_df <- as.data.frame(pca_result$x)
+scores_df$Stage <- Pokemon$Stage
+Evo <- c('red', 'green', 'blue')[scores_df$Stage]
+
+biplot(pca_result, col = Evo, cex = 0.7)
+
+legend("topright", legend = 
+         c("Stage 1", "Stage 2", "Stage 3"), 
+       fill = c('red', 'green', 'blue'),
+       title = "Evolution Stage")
+
 ```
 
 Comment of the result:
 
 ~~~
-Please write your answer in full sentences.
-
-
+The vectors for attack and special attack are close to being parallel to each other, which show positive correlation between these two attributes.
 ~~~
 
 ## Additional Material
